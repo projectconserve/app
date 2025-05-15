@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <title>Project Conserve Website</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; }
+        html {display:block; scroll-padding-bottom: 200px;}
+        .content { padding: 20px;}
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #333; display: flex; justify-content: space-around; padding: 10px 0; }
+        .navbar a { color: white; text-decoration: none; padding: 10px; cursor: pointer; }
+        .page { display: none; padding: 20px; padding-bottom: 60px;}
+        .active { display: block; }
+        video { width: 100%; max-width: 400px; border: 2px solid black; margin-top: 10px; }
+        .gallery { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+        .gallery img { width: 100px; height: auto; margin: 5px; cursor: pointer; border: 2px solid black; }
+        .gallery img.selected { border: 3px solid red; }
+        .hidden { display: none; }
+        #selectedCanvas { border: 2px solid black; cursor: crosshair;}
+        #callibrationCanvas { border: 2px solid black; cursor: crosshair;}
+        #finalCanvas { border: 2px solid black;}
+        .table-container { display: flex; justify-content: center; margin-top: 20px; }
+        table { border-collapse: collapse; width: 50%;}
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .highlighted { background-color: yellow; }
+        button {
+            display: inline-block;
+            outline: none;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #222222;
+            transition: box-shadow 0.2s ease 0s, -ms-transform 0.1s ease 0s, -webkit-transform 0.1s ease 0s, transform 0.1s ease 0s;
+            background: #fff;
+            color: #222222;
+        }
+        .uploadButton {
+            display: inline-block;
+            outline: none;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 20px;
+            font-weight: 600;
+            padding-left: 15px;
+            padding-right: 15px;
+            border-radius: 8px;
+            border: 1px solid #222222;
+            transition: box-shadow 0.2s ease 0s, -ms-transform 0.1s ease 0s, -webkit-transform 0.1s ease 0s, transform 0.1s ease 0s;
+            background: #fff;
+            color: #222222;
+        }
+    </style>
+</head>
+<body>
+    <!-- Camera Page -->
+    <div id="camera" class="page active">
+        <h1>Upload</h1>
+        <!-- Upload Photo Feature -->
+        <canvas id="canvas" class="hidden"></canvas>
+        <br>
+        <label for="uploadInput" class="uploadButton">Upload Image</label>
+        <input style="display:none" type="file" id="uploadInput" accept="image/*"></input>
+        <button id="proceedSelected" class="hidden" onclick="goToCallibrationPage()">Select and Proceed</button>
+        <br>
+        
+        <div id="gallery" class="gallery"></div>
+    </div>
+
+     <!-- Callibration Page -->
+     <div id="callibrationPage" class="page">
+        <h1>Mark out the distance</h1>
+        <canvas id="callibrationCanvas"></canvas>
+        <br>
+        <label for="len">Distance callibrated (mm):</label>
+        <input type="float" id="callibratedLength">
+        <br>
+        <button onclick="goToCamera()">Go Back</button>
+        <button onclick="goToSelectionPage()">Proceed</button>
+        <button onclick="resetLine()" id="resetButton" class="hidden">Clear</button> 
+    </div>
+
+    <!-- Selected Image Page -->
+    <div id="selectedImagePage" class="page">
+        <h1>Mark out the crabs</h1>
+        <canvas id="selectedCanvas"></canvas>
+        <br>
+        <button onclick="goToCallibrationPage()">Go Back</button>
+        <button onclick="goToFinalPage()">Proceed</button>
+        <button onclick="undoLastRectangle()" id="undoButton" class="hidden">Undo</button>
+    </div>
+    <!-- Final Page -->
+    <div id="finalPage" class="page">
+        <h1>Final Image</h1>
+        <canvas id="finalCanvas"></canvas>
+        <br>
+        <button onclick="goToSelectionPage()">Go back to editing</button>
+        <button onclick="goToCamera()">Go Back to Camera</button>
+
+        <div class="table-container">
+            <table id="sizeTable">
+                <thead>
+                    <tr>
+                        <th>Index</th>
+                        <th>Width (mm)</th>
+                        <th>Height (mm)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <button onclick="appendData()">Add data</button>
+    </div>
+
+    <!-- Data Page-->
+    <div id="dataPage" class="page">
+        <h1>Final data</h1>
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Width (mm)</th>
+                        <th>Height (mm)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <br>
+        <button id="deleteLastButton" class="hidden" onclick="deleteLast()">Delete last</button>
+        <button id="exportButton" class="hidden" onclick="goToDetails()">Export</button>
+    </div>
+
+    <!-- Detail page-->
+    <div id="detailPage" class="page">
+        <label style="padding-top:40px;" for="Date">Date of data collection:</label>
+        <input type="datetime-local" id="Date" name="Date" min="2025-01-01T00:00" max="2025-12-31T00:00" required/>
+        <br>
+        <label for="Weather">Weather on day of data collection: </label>
+        <input type="text" id="Weather" name="Weather"/>
+        <br>
+        <label for="Remarks">Remarks on today's data collection</label>
+        <br>
+        <textarea id="Remarks" name="Remarks" rows="4" cols="50"></textarea>
+        <br>
+        <button id="exportBtn">Export</button>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="contact" class="page">
+        <h1>Contact Us</h1>
+        <p>Reach out to us for more information.</p>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="navbar">
+        <a onclick="showPage('camera')">Camera</a>
+        <a onclick="showPage('dataPage')">Data</a>
+        <a onclick="showPage('contact')">Contact</a>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+        const deleteButton = document.getElementById('deleteSelected');
+        const proceedButton = document.getElementById('proceedSelected');
+        const resetButton = document.getElementById('resetButton');
+        const undoButton = document.getElementById('undoButton');
+        const canvas = document.getElementById('canvas');
+        const gallery = document.getElementById('gallery');
+        const callibratedLength = document.getElementById('callibratedLength');
+        const callibrationCanvas = document.getElementById('callibrationCanvas');
+        const selectedCanvas = document.getElementById('selectedCanvas');
+        const finalCanvas = document.getElementById('finalCanvas');
+        const ctx = canvas.getContext("2d");
+        const cctx = callibrationCanvas.getContext("2d");
+        const sctx = selectedCanvas.getContext("2d");
+        const finalctx = finalCanvas.getContext("2d");
+        const tableBody = document.querySelector("#sizeTable tbody");
+        const dataBody = document.querySelector("#dataTable tbody");
+        const dateOfData = document.getElementById('Date');
+        const weatherOnDate = document.getElementById('Weather');
+        const remarks = document.getElementById('Remarks');
+        var cWidth = window.innerWidth;
+        var cHeight = window.innerWidth;
+        let currentSelectedImage = null;
+        let rectangles = [];
+        let line = null;
+        let data = [];
+        //let line = ({sx: 0, sy: 0, ex: 50, ey: 50/*, len: sqrt((endX - startX)**2 + (endY - startY)**2)*/})
+        let isDrawing = false;
+        let startX, startY;
+
+        function resetValues() {
+            currentSelectedImage = null;
+            rectangles = []
+            line = null;
+            callibratedLength.value = null;
+        }
+
+        function uploadImageToCanvas(imageSrc) {
+            resetValues();
+            const img = document.createElement("img");
+            img.src = imageSrc;
+            currentSelectedImage = img.src;
+            img.onclick = () => toggleSelection(img);
+            img.onload = function () {
+                canvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                canvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            canvas.classList.remove("hidden");
+            proceedButton.classList.remove("hidden");
+        }
+
+        uploadInput.addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => uploadImageToCanvas(e.target.result);
+            reader.readAsDataURL(file);
+        });
+
+        function goToCallibrationPage() {
+            if (currentSelectedImage) {
+                //rectangles = [];
+                const img = new Image();
+                img.src = currentSelectedImage;
+                img.onload = function () {
+                    callibrationCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    callibrationCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    
+                    cctx.clearRect(0, 0, callibrationCanvas.width, callibrationCanvas.height);
+                    cctx.drawImage(img, 0, 0, callibrationCanvas.width, callibrationCanvas.height);
+                    
+                    cctx.strokeStyle = "red";
+                    cctx.lineWidth = 2;
+                    if (line != null) {
+                        cctx.beginPath();
+                        cctx.moveTo(line.sx, line.sy);
+                        cctx.lineTo(line.ex, line.ey);
+                        cctx.stroke();
+                    }
+                };
+                showPage("callibrationPage");
+            }
+        }
+
+        function startDrawingLine(event) {
+            isDrawing = true;
+            const rect = callibrationCanvas.getBoundingClientRect();
+
+            let clientX, clientY;
+            if (event.touches) { // Touch support
+                event.preventDefault(); // Prevent scrolling while drawing
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else { // Mouse support
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            startX = clientX - rect.left;
+            startY = clientY - rect.top;
+        }
+
+        function stopDrawingLine(event) {
+            if (!isDrawing) {
+                return;
+            }
+            isDrawing = false;
+
+            const rect = callibrationCanvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (event.touches) {
+                event.preventDefault();
+                clientX = event.changedTouches[0].clientX;
+                clientY = event.changedTouches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            const endX = clientX - rect.left;
+            const endY = clientY - rect.top;
+
+            line = ({sx: startX, sy: startY, ex: endX, ey: endY, len: Math.sqrt((endX - startX)**2 + (endY - startY)**2)})
+            resetButton.classList.remove("hidden");
+            goToCallibrationPage();
+        }
+
+        function resetLine() {
+            line = null;
+            resetButton.classList.add("hidden");
+            goToCallibrationPage();
+        }
+
+        function goToSelectionPage() {
+            if (callibratedLength.value == "") {
+                alert("Callibrated length should not be left blank");
+                return;
+            } else if (isNaN(callibratedLength.value)){
+                alert("Please input a number");
+                return; 
+            }
+            if (line == null){
+                alert("Please draw a referenece line for callibration")
+                return;
+            }
+            if (currentSelectedImage) {
+                //rectangles = [];
+                const img = new Image();
+                img.src = currentSelectedImage;
+                img.onload = function () {
+                    selectedCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    selectedCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    
+                    sctx.clearRect(0, 0, selectedCanvas.width, selectedCanvas.height);
+                    sctx.drawImage(img, 0, 0, selectedCanvas.width, selectedCanvas.height);
+                    
+                    rectangles.forEach(rect => {
+                        sctx.strokeStyle = "red";
+                        sctx.lineWidth = 2;
+                        sctx.font = "10px Arial"
+                        sctx.fillStyle = "red"
+                        sctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                        sctx.fillText(`${Math.abs((rect.width*callibratedLength.value/line.len)).toFixed(2)} mm x ${Math.abs((rect.height*callibratedLength.value/line.len)).toFixed(2)} mm`, Math.min(rect.x, rect.x + rect.width) + 1, Math.min(rect.y, rect.y + rect.height) - 5);
+                    });
+                };
+                showPage("selectedImagePage");
+            }
+        }
+
+        function startDrawing(event) {
+            isDrawing = true;
+            const rect = selectedCanvas.getBoundingClientRect();
+
+            let clientX, clientY;
+            if (event.touches) { // Touch support
+                event.preventDefault(); // Prevent scrolling while drawing
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else { // Mouse support
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            startX = clientX - rect.left;
+            startY = clientY - rect.top;
+        }
+        function stopDrawing(event) {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            const rect = selectedCanvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (event.touches) {
+                event.preventDefault();
+                clientX = event.changedTouches[0].clientX;
+                clientY = event.changedTouches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            const endX = clientX - rect.left;
+            const endY = clientY - rect.top;
+
+            rectangles.push({ x: startX, y: startY, width: endX - startX, height: endY - startY });
+            undoButton.classList.remove("hidden");
+            goToSelectionPage();
+        }
+
+        function undoLastRectangle() {
+            rectangles.pop();
+            if(rectangles.length == 0) {
+                undoButton.classList.add("hidden");
+            }
+            goToSelectionPage();
+        }
+
+        function goToCamera() {
+            showPage("camera");
+        }
+        function goToFinalPage() {
+            if (currentSelectedImage) {
+                const img = new Image();
+                img.src = currentSelectedImage;
+                img.onload = function () {
+                    finalCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    finalCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+
+                    finalctx.clearRect(0, 0, finalCanvas.width, finalCanvas.height);
+                    finalctx.drawImage(img, 0, 0, finalCanvas.width, finalCanvas.height);
+
+                    tableBody.innerHTML = ""; // Clear previous table entries
+
+                    rectangles.forEach((rect, index) => {
+                        finalctx.strokeStyle = "red";
+                        finalctx.lineWidth = 2;
+                        finalctx.font = "10px Arial";
+                        finalctx.fillStyle = "red";
+                        finalctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                        finalctx.fillText(`${Math.abs((rect.width*callibratedLength.value/line.len)).toFixed(2)} mm x ${Math.abs((rect.height*callibratedLength.value/line.len)).toFixed(2)} mm`, Math.min(rect.x, rect.x + rect.width) + 1, Math.min(rect.y, rect.y + rect.height) - 5);
+
+                        // Create table row
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${Math.abs((rect.width * callibratedLength.value / line.len)).toFixed(2)}</td>
+                            <td>${Math.abs((rect.height * callibratedLength.value / line.len)).toFixed(2)}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                };
+                showPage("finalPage");
+            }
+        }
+
+        function appendData() {
+            rectangles.forEach((rect) => {
+                var height = Math.abs((rect.width * callibratedLength.value / line.len)).toFixed(2);
+                var width = Math.abs((rect.height * callibratedLength.value / line.len)).toFixed(2)
+                data.push([height,width]);
+            })
+            updateDataTable();
+            resetValues();
+            canvas.classList.add("hidden");
+            proceedButton.classList.add("hidden");  
+            document.getElementById("deleteLastButton").classList.remove("hidden");
+            document.getElementById("exportButton").classList.remove("hidden");
+            showPage("dataPage");
+        }
+
+        function deleteLast() {
+            data.pop();
+            updateDataTable();
+            if(data.length === 0) {
+                document.getElementById("deleteLastButton").classList.add("hidden");
+                document.getElementById("exportButton").classList.add("hidden");
+            }
+            showPage("dataPage");
+        }
+
+        function updateDataTable() {
+            dataBody.innerHTML = "";
+            data.forEach((rect) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${rect[0]}</td>
+                    <td>${rect[1]}</td>
+                `;
+                dataBody.appendChild(row);
+            });
+        }
+
+        function goToDetails() {
+            showPage("detailPage");
+        }
+
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            if(weatherOnDate.value === ""){
+                alert("Please give the weather");
+                return;
+            }
+
+            var csv = [];
+            csv.push(['Date',dateOfData.value].join('\t'));
+            csv.push(['Weather',weatherOnDate.value].join('\t'));
+            console.log("Exporting data");
+            data.forEach((rect) =>{
+                csv.push(rect.join('\t'));
+            })
+            console.log("Extracted data");
+            csv.push(['Remarks',remarks.value].join('\t'));
+            var csvContent = csv.join('\n'); 
+            
+            var blob = new Blob([csvContent], { type: 'application/vnd.ms-excel' });
+            
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Data_export.xls';  
+            
+            link.click();
+        });
+
+        selectedCanvas.addEventListener("mousedown", startDrawing);
+        selectedCanvas.addEventListener("mouseup", stopDrawing);
+        selectedCanvas.addEventListener("touchstart", startDrawing, { passive: false });
+        selectedCanvas.addEventListener("touchend", stopDrawing, { passive: false });
+        callibrationCanvas.addEventListener("mousedown", startDrawingLine);
+        callibrationCanvas.addEventListener("mouseup", stopDrawingLine);
+        callibrationCanvas.addEventListener("touchstart", startDrawingLine, { passive: false });
+        callibrationCanvas.addEventListener("touchend", stopDrawingLine, { passive: false });
+        /*startButton.addEventListener("click", startCamera);
+        stopButton.addEventListener("click",stopCamera)
+        captureButton.addEventListener("click", capturePhoto);
+        deleteButton.addEventListener("click", deleteSelectedPhotos);
+        proceedButton.addEventListener("click", goToCallibrationPage);*/
+        </script>
+
+</body>
+</html>
