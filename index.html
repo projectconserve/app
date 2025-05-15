@@ -211,8 +211,8 @@
             currentSelectedImage = img.src;
             img.onclick = () => toggleSelection(img);
             img.onload = function () {
-                canvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
-                canvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                canvas.width = img.width * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                canvas.height = img.height * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -235,8 +235,8 @@
                 const img = new Image();
                 img.src = currentSelectedImage;
                 img.onload = function () {
-                    callibrationCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
-                    callibrationCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    callibrationCanvas.width = img.width * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    callibrationCanvas.height = img.height * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
                     
                     cctx.clearRect(0, 0, callibrationCanvas.width, callibrationCanvas.height);
                     cctx.drawImage(img, 0, 0, callibrationCanvas.width, callibrationCanvas.height);
@@ -321,8 +321,8 @@
                 const img = new Image();
                 img.src = currentSelectedImage;
                 img.onload = function () {
-                    selectedCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
-                    selectedCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    selectedCanvas.width = img.width * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    selectedCanvas.height = img.height * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
                     
                     sctx.clearRect(0, 0, selectedCanvas.width, selectedCanvas.height);
                     sctx.drawImage(img, 0, 0, selectedCanvas.width, selectedCanvas.height);
@@ -397,8 +397,8 @@
                 const img = new Image();
                 img.src = currentSelectedImage;
                 img.onload = function () {
-                    finalCanvas.width = img.width * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
-                    finalCanvas.height = img.height * Math.min(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    finalCanvas.width = img.width * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
+                    finalCanvas.height = img.height * Math.max(cWidth*0.7/img.width,cHeight*0.5/img.height);
 
                     finalctx.clearRect(0, 0, finalCanvas.width, finalCanvas.height);
                     finalctx.drawImage(img, 0, 0, finalCanvas.width, finalCanvas.height);
