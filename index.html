@@ -96,7 +96,7 @@
         <h1>Mark out the distance</h1>
         <canvas id="callibrationCanvas"></canvas>
         <br>
-        <label for="len">Distance callibrated (mm):</label>
+        <label for="len" style="color: #a7b099;">Distance callibrated (mm):</label>
         <input type="float" id="callibratedLength">
         <br>
         <button onclick="goToCamera()">Go Back</button>
@@ -495,30 +495,44 @@
         }
 
         document.getElementById('exportBtn').addEventListener('click', function() {
-            if(weatherOnDate.value === ""){
-                alert("Please give the weather");
-                return;
-            }
+    if (weatherOnDate.value === "") {
+        alert("Please give the weather");
+        return;
+    }
 
-            var csv = [];
-            csv.push(['Date',dateOfData.value].join('\t'));
-            csv.push(['Weather',weatherOnDate.value].join('\t'));
-            console.log("Exporting data");
-            data.forEach((rect) =>{
-                csv.push(rect.join('\t'));
-            })
-            console.log("Extracted data");
-            csv.push(['Remarks',remarks.value].join('\t'));
-            var csvContent = csv.join('\n'); 
-            
-            var blob = new Blob([csvContent], { type: 'application/vnd.ms-excel' });
-            
-            var link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Data_export.xls';  
-            
-            link.click();
-        });
+    // Helper function to escape CSV fields
+    function escapeCSV(value) {
+        if (value == null) return '';
+        value = value.toString();
+        // Wrap in quotes if it contains comma, quote, or newline
+        if (/[",\n]/.test(value)) {
+            value = '"' + value.replace(/"/g, '""') + '"';
+        }
+        return value;
+    }
+
+    var csv = [];
+    csv.push([escapeCSV('Date'), escapeCSV(dateOfData.value)].join(','));
+    csv.push([escapeCSV('Weather'), escapeCSV(weatherOnDate.value)].join(','));
+    console.log("Exporting data");
+
+    data.forEach((rect) => {
+        csv.push(rect.map(escapeCSV).join(','));
+    });
+
+    console.log("Extracted data");
+    csv.push([escapeCSV('Remarks'), escapeCSV(remarks.value)].join(','));
+
+    var csvContent = csv.join('\n');
+
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Data_export.csv';
+    link.click();
+});
+
 
         selectedCanvas.addEventListener("mousedown", startDrawing);
         selectedCanvas.addEventListener("mouseup", stopDrawing);
